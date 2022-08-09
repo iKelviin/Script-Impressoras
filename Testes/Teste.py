@@ -23,8 +23,10 @@ print('Iniciando Sistema...')
 
 class Relatorio_Impressoras:
     def Inicio(self):
+        self.Agora = dt.datetime.now()
         self.DataAtual = datetime.today()
         self.Hora = '{}'.format(self.DataAtual.hour)
+        self.GeradoEm = self.Agora.strftime("%d/%m/%Y %H:%M")
         
         if int(self.Hora) >= 5 and int(self.Hora) <= 7:
 
@@ -33,23 +35,38 @@ class Relatorio_Impressoras:
             self.Hoje = dt.datetime.now()
             self.Ontem = self.Hoje - dt.timedelta(1)
             self.DiaAtual = self.Hoje.strftime("%d-%m-%y")
+            self.OntemdeOntem = self.Ontem - dt.timedelta(1)
             print('Data Atual: ',self.DiaAtual)
             self.DiaAnterior = self.Ontem.strftime("%d-%m-%y")  
             print('Data Anterior: ',self.DiaAnterior)
-            print("Criando a Sheet :",self.DiaAtual)
-            self.novaPlanilha = self.planilha.copy_worksheet(self.modelo).title = self.DiaAtual
-            self.planilha.save(r"\\SRVSAO028\Automação Python\Relatorio_Diario.xlsx")
+            print('Ontem de Ontem: ',self.OntemdeOntem)
+            self.lista = self.planilha.sheetnames
+        
+            if self.DiaAtual in self.lista:
+                print("Sheet Existe!...")
+                print('Iniciando Relatorio Primeiro Turno...')
+                self.MFP_432_PrimeiroTurno()
+                self.Salvar_Dados_MFP_432_PrimeiroTurno()
+                self.MFP_E52645_PrimeiroTurno()
+                self.Salvar_Dados_MFP_E52645_PrimeiroTurno()
+                self.MFP_M479fdw_PrimeiroTurno()
+                self.Salvar_Dados_MFP_M479fdw_PrimeiroTurno()
+                self.Enviar_Email_PrimeiroTurno()
+            else:
+                print("Criando a Sheet :",self.DiaAtual)
+                self.novaPlanilha = self.planilha.copy_worksheet(self.modelo).title = self.DiaAtual
+                self.planilha.save(r"\\SRVSAO028\Automação Python\Relatorio_Diario.xlsx")
+                print('Iniciando Relatorio Primeiro Turno...')
+                self.MFP_432_PrimeiroTurno()
+                self.Salvar_Dados_MFP_432_PrimeiroTurno()
+                self.MFP_E52645_PrimeiroTurno()
+                self.Salvar_Dados_MFP_E52645_PrimeiroTurno()
+                self.MFP_M479fdw_PrimeiroTurno()
+                self.Salvar_Dados_MFP_M479fdw_PrimeiroTurno()
+                self.Enviar_Email_PrimeiroTurno()
+        
 
-            print('Iniciando Relatorio Primeiro Turno...')
-            self.MFP_432_PrimeiroTurno()
-            self.Salvar_Dados_MFP_432_PrimeiroTurno()
-            self.MFP_E52645_PrimeiroTurno()
-            self.Salvar_Dados_MFP_E52645_PrimeiroTurno()
-            self.MFP_M479fdw_PrimeiroTurno()
-            self.Salvar_Dados_MFP_M479fdw_PrimeiroTurno()
-            self.Enviar_Email_PrimeiroTurno()
-
-        elif int(self.Hora) >= 16 and int(self.Hora) <= 17:
+        elif int(self.Hora) >= 13 and int(self.Hora) <= 15:
             self.planilha = openpyxl.load_workbook(r"\\SRVSAO028\Automação Python\Relatorio_Diario.xlsx")
             self.modelo = self.planilha['Modelo']
             self.Hoje = dt.datetime.now()
@@ -125,10 +142,10 @@ class Relatorio_Impressoras:
             
         else:
             print('Iniciando Relatorio Fora de Turno...')            
-            self.MFP_432()
-            self.Salvar_Dados_MFP_432()
-            self.MFP_E52645()
-            self.Salvar_Dados_MFP_E52645()
+            #self.MFP_432()
+            #self.Salvar_Dados_MFP_432()
+            #self.MFP_E52645()
+            #self.Salvar_Dados_MFP_E52645()
             self.MFP_M479fdw()
             self.Salvar_Dados_MFP_M479fdw()
             self.Enviar_Email()
@@ -193,23 +210,40 @@ class Relatorio_Impressoras:
                         print("Atualizando Pagina...")
                         self.navegador.refresh()   
                         self.toner = 1
-            
                 
                 
             except:
                 print("Error: Impressora Offline!")
-                self.offline += 1
-                self.planilha = pd.read_excel(r"\\SRVSAO028\Automação Python\Relatorio_Diario.xlsx",sheet_name= self.DiaAnterior)
+                self.planilha = openpyxl.load_workbook(r"\\SRVSAO028\Automação Python\Relatorio_Diario.xlsx")
+                self.lista = self.planilha.sheetnames
 
-                self.TT_432 = self.planilha.iloc[2:17,14:18].rename(columns= {'TERCEIRO TURNO':'Local','Unnamed: 15':'Modelo',
-                                                                            'Unnamed: 16':f'% de Toner','Unnamed: 17':'Uni.Imagem'})
+                if self.DiaAnterior in self.lista:
+                    self.offline += 1
+                    self.planilha = pd.read_excel(r"\\SRVSAO028\Automação Python\Relatorio_Diario.xlsx",sheet_name= self.DiaAnterior)
 
-                self.Toner = self.TT_432.loc[self.TT_432["Local"] == self.nome_impressoras[self.i],f"% de Toner"]
-                self.Imagem = self.TT_432.loc[self.TT_432["Local"] == self.nome_impressoras[self.i],"Uni.Imagem"]
+                    self.TT_432 = self.planilha.iloc[2:17,14:18].rename(columns= {'TERCEIRO TURNO':'Local','Unnamed: 15':'Modelo',
+                                                                                'Unnamed: 16':f'% de Toner','Unnamed: 17':'Uni.Imagem'})
 
-                self.lista_dos_toner.append(self.Toner.to_string(index=False))
-                self.lista_da_imagem.append(self.Imagem.to_string(index=False)) 
-                print(self.lista_dos_toner, self.lista_da_imagem) 
+                    self.Toner = self.TT_432.loc[self.TT_432["Local"] == self.nome_impressoras[self.i],f"% de Toner"]
+                    self.Imagem = self.TT_432.loc[self.TT_432["Local"] == self.nome_impressoras[self.i],"Uni.Imagem"]
+
+                    self.lista_dos_toner.append(self.Toner.to_string(index=False))
+                    self.lista_da_imagem.append(self.Imagem.to_string(index=False)) 
+                    print(self.lista_dos_toner, self.lista_da_imagem) 
+
+                else:
+                    self.offline += 1
+                    self.planilha = pd.read_excel(r"\\SRVSAO028\Automação Python\Relatorio_Diario.xlsx",sheet_name= self.OntemdeOntem)
+
+                    self.TT_432 = self.planilha.iloc[2:17,14:18].rename(columns= {'TERCEIRO TURNO':'Local','Unnamed: 15':'Modelo',
+                                                                                'Unnamed: 16':f'% de Toner','Unnamed: 17':'Uni.Imagem'})
+
+                    self.Toner = self.TT_432.loc[self.TT_432["Local"] == self.nome_impressoras[self.i],f"% de Toner"]
+                    self.Imagem = self.TT_432.loc[self.TT_432["Local"] == self.nome_impressoras[self.i],"Uni.Imagem"]
+
+                    self.lista_dos_toner.append(self.Toner.to_string(index=False))
+                    self.lista_da_imagem.append(self.Imagem.to_string(index=False)) 
+                    print(self.lista_dos_toner, self.lista_da_imagem) 
         print("Impressoras MFP 432 Offline: ",self.offline)
         print('Fechando Navegador...')
         self.offline = 0
@@ -270,18 +304,34 @@ class Relatorio_Impressoras:
                         self.cartucho = 1
             except:
                 print("Error: Impressora Offline!")
-                self.offline += 1
-                self.planilha = pd.read_excel(r"\\SRVSAO028\Automação Python\Relatorio_Diario.xlsx",sheet_name= self.DiaAnterior)
+                self.planilha = openpyxl.load_workbook(r"\\SRVSAO028\Automação Python\Relatorio_Diario.xlsx")
+                self.lista = self.planilha.sheetnames
+                if self.DiaAnterior in self.lista:
+                    self.offline += 1
+                    self.planilha = pd.read_excel(r"\\SRVSAO028\Automação Python\Relatorio_Diario.xlsx",sheet_name= self.DiaAnterior)
 
-                self.TT_E52645 = self.planilha.iloc[19:24,14:18].rename(columns= {'TERCEIRO TURNO':'Local','Unnamed: 15':'Modelo',
-                                                                            'Unnamed: 16':'Toner Preto','Unnamed: 17':'Kit Aliment. Doc.'})
+                    self.TT_E52645 = self.planilha.iloc[19:24,14:18].rename(columns= {'TERCEIRO TURNO':'Local','Unnamed: 15':'Modelo',
+                                                                                'Unnamed: 16':'Toner Preto','Unnamed: 17':'Kit Aliment. Doc.'})
 
-                self.Toner = self.TT_E52645.loc[self.TT_E52645["Local"] == self.nome_impressoras[self.i],"Toner Preto"]                                                                 
-                self.Kit = self.TT_E52645.loc[self.TT_E52645["Local"] == self.nome_impressoras[self.i],"Kit Aliment. Doc."]
+                    self.Toner = self.TT_E52645.loc[self.TT_E52645["Local"] == self.nome_impressoras[self.i],"Toner Preto"]                                                                 
+                    self.Kit = self.TT_E52645.loc[self.TT_E52645["Local"] == self.nome_impressoras[self.i],"Kit Aliment. Doc."]
 
-                self.lista_dos_toner.append(self.Toner.to_string(index=False))
-                self.lista_da_imagem.append(self.Kit.to_string(index=False))
-                print(self.lista_dos_toner, self.lista_da_imagem) 
+                    self.lista_dos_toner.append(self.Toner.to_string(index=False))
+                    self.lista_da_imagem.append(self.Kit.to_string(index=False))
+                    print(self.lista_dos_toner, self.lista_da_imagem)
+                else:
+                    self.offline += 1
+                    self.planilha = pd.read_excel(r"\\SRVSAO028\Automação Python\Relatorio_Diario.xlsx",sheet_name= self.OntemdeOntem)
+
+                    self.TT_E52645 = self.planilha.iloc[19:24,14:18].rename(columns= {'TERCEIRO TURNO':'Local','Unnamed: 15':'Modelo',
+                                                                                'Unnamed: 16':'Toner Preto','Unnamed: 17':'Kit Aliment. Doc.'})
+
+                    self.Toner = self.TT_E52645.loc[self.TT_E52645["Local"] == self.nome_impressoras[self.i],"Toner Preto"]                                                                 
+                    self.Kit = self.TT_E52645.loc[self.TT_E52645["Local"] == self.nome_impressoras[self.i],"Kit Aliment. Doc."]
+
+                    self.lista_dos_toner.append(self.Toner.to_string(index=False))
+                    self.lista_da_imagem.append(self.Kit.to_string(index=False))
+                    print(self.lista_dos_toner, self.lista_da_imagem)
         print("Impressoras E52645 Offline: ",self.offline)
         print('Fechando Navegador...')
         self.offline = 0
@@ -348,22 +398,42 @@ class Relatorio_Impressoras:
                         self.preto = 1
             except:
                 print("Error: Impressora Offline!")
-                self.offline += 1
-                self.planilha = pd.read_excel('Relatorio_Diario.xlsx',sheet_name= self.DiaAnterior)
-                
-                self.TT_479 = self.planilha.iloc[26:32,14:20].rename(columns= {'TERCEIRO TURNO':'Local','Unnamed: 15':'Modelo',
-                                                                        'Unnamed: 16':'Preto','Unnamed: 17':'Ciano','Unnamed: 18':'Magenta','Unnamed: 19':'Amarelo'})
+                self.planilha = openpyxl.load_workbook(r"\\SRVSAO028\Automação Python\Relatorio_Diario.xlsx")
+                self.lista = self.planilha.sheetnames
+                if self.DiaAnterior in self.lista:
+                    self.offline += 1
+                    self.planilha = pd.read_excel('Relatorio_Diario.xlsx',sheet_name= self.DiaAnterior)
 
-                self.Preto = self.TT_479.loc[self.TT_479["Local"] == self.nome_impressoras[self.i],"Preto"]                                                                 
-                self.Ciano = self.TT_479.loc[self.TT_479["Local"] == self.nome_impressoras[self.i],"Ciano"]
-                self.Magenta = self.TT_479.loc[self.TT_479["Local"] == self.nome_impressoras[self.i],"Magenta"]                                                                 
-                self.Amarelo = self.TT_479.loc[self.TT_479["Local"] == self.nome_impressoras[self.i],"Amarelo"]                
- 
-                self.cartucho_preto.append(self.Preto.to_string(index=False))
-                self.cartucho_cyan.append(self.Ciano.to_string(index=False))
-                self.cartucho_magenta.append(self.Magenta.to_string(index=False))
-                self.cartucho_yellow.append(self.Amarelo.to_string(index=False))
-                print(self.cartucho_preto, self.cartucho_cyan, self.cartucho_magenta, self.cartucho_yellow) 
+                    self.TT_479 = self.planilha.iloc[26:32,14:20].rename(columns= {'TERCEIRO TURNO':'Local','Unnamed: 15':'Modelo',
+                                                                            'Unnamed: 16':'Preto','Unnamed: 17':'Ciano','Unnamed: 18':'Magenta','Unnamed: 19':'Amarelo'})
+
+                    self.Preto = self.TT_479.loc[self.TT_479["Local"] == self.nome_impressoras[self.i],"Preto"]                                                                 
+                    self.Ciano = self.TT_479.loc[self.TT_479["Local"] == self.nome_impressoras[self.i],"Ciano"]
+                    self.Magenta = self.TT_479.loc[self.TT_479["Local"] == self.nome_impressoras[self.i],"Magenta"]                                                                 
+                    self.Amarelo = self.TT_479.loc[self.TT_479["Local"] == self.nome_impressoras[self.i],"Amarelo"]                
+    
+                    self.cartucho_preto.append(self.Preto.to_string(index=False))
+                    self.cartucho_cyan.append(self.Ciano.to_string(index=False))
+                    self.cartucho_magenta.append(self.Magenta.to_string(index=False))
+                    self.cartucho_yellow.append(self.Amarelo.to_string(index=False))
+                    print(self.cartucho_preto, self.cartucho_cyan, self.cartucho_magenta, self.cartucho_yellow)
+                else:
+                    self.offline += 1
+                    self.planilha = pd.read_excel('Relatorio_Diario.xlsx',sheet_name= self.OntemdeOntem)
+
+                    self.TT_479 = self.planilha.iloc[26:32,14:20].rename(columns= {'TERCEIRO TURNO':'Local','Unnamed: 15':'Modelo',
+                                                                            'Unnamed: 16':'Preto','Unnamed: 17':'Ciano','Unnamed: 18':'Magenta','Unnamed: 19':'Amarelo'})
+
+                    self.Preto = self.TT_479.loc[self.TT_479["Local"] == self.nome_impressoras[self.i],"Preto"]                                                                 
+                    self.Ciano = self.TT_479.loc[self.TT_479["Local"] == self.nome_impressoras[self.i],"Ciano"]
+                    self.Magenta = self.TT_479.loc[self.TT_479["Local"] == self.nome_impressoras[self.i],"Magenta"]                                                                 
+                    self.Amarelo = self.TT_479.loc[self.TT_479["Local"] == self.nome_impressoras[self.i],"Amarelo"]                
+    
+                    self.cartucho_preto.append(self.Preto.to_string(index=False))
+                    self.cartucho_cyan.append(self.Ciano.to_string(index=False))
+                    self.cartucho_magenta.append(self.Magenta.to_string(index=False))
+                    self.cartucho_yellow.append(self.Amarelo.to_string(index=False))
+                    print(self.cartucho_preto, self.cartucho_cyan, self.cartucho_magenta, self.cartucho_yellow)
         print("Impressoras MFP M479fdw Offline: ",self.offline)
         self.offline = 0                
         print('Fechando Navegador...')
@@ -392,10 +462,13 @@ class Relatorio_Impressoras:
         self.Toner_MFP432 = self.tabela_simpress.loc[self.tabela_simpress["Modelo"] == "432FDN","Estoque"]
         self.Toner_MFPE52645 = self.tabela_simpress.loc[self.tabela_simpress["Modelo"] == "E52645","Estoque"]
         self.Toner_MFP7E77830 = self.tabela_simpress.loc[self.tabela_simpress["Modelo"] == "HP 7E77830","Estoque"]
-        self.Toner_MFP479 = self.tabela_simpress.loc[self.tabela_simpress["Modelo"] == "M479","Estoque"]
+        self.M479_Black = self.tabela_simpress.loc[self.tabela_simpress["Cor"] == "Black","Estoque"]
+        self.M479_Cyan = self.tabela_simpress.loc[self.tabela_simpress["Cor"] == "Cyan","Estoque"]
+        self.M479_Pink = self.tabela_simpress.loc[self.tabela_simpress["Cor"] == "Pink","Estoque"]
+        self.M479_Yellow = self.tabela_simpress.loc[self.tabela_simpress["Cor"] == "Yellow","Estoque"]
+
         print('Enviando E-mail...')
         time.sleep(3)
-        
 
         self.planilhaAberta = pd.read_excel(r"\\SRVSAO028\Automação Python\Relatorio_Diario.xlsx",sheet_name= self.DiaAtual)
 
@@ -408,8 +481,9 @@ class Relatorio_Impressoras:
         self.relatorio3 = self.planilhaAberta.iloc[26:32,:6].rename(columns={'PRIMEIRO TURNO':'Local','Unnamed: 1':'Modelo','Unnamed: 2':'Preto','Unnamed: 3':'Ciano','Unnamed: 4':'Magenta','Unnamed: 5':'Amarelo'}).style.set_caption('Consumo de Toner HP LaserJet Pro MFP M479fdw').set_table_styles([
             { 'selector': 'caption', 'props': 'font-size: 18px; font-weight: bold; text-align: center' }]).set_properties(**{'border':'1px solid black',
              'padding-right': '20px'}).hide_index()
+        
         self.fromaddr = "sistemas.plural@plural.com.br"
-        self.toaddr = "kelvin.rocha@plural.com.br"
+        self.toaddr = "suporte@plural.com.br"
         self.msg = MIMEMultipart() 
         self.msg['From'] = self.fromaddr 
         self.msg['To'] = self.toaddr 
@@ -419,22 +493,36 @@ class Relatorio_Impressoras:
             <head></head>
             <body>
                 <h3 style="margin-left:140px">PRIMEIRO TURNO</h3>
+                <p>Relatório gerado em: <strong>{0}</strong></p>
                 <p>Segue Relatórios de todas as impressoras e estoque de suprimentos do 1º Turno:</p>
                 <p></p>
-                {0}
+                {1}
                 <p></p>
-                <p>Toners MFP 432FDN em estoque : <strong>{1}</strong></p>
+                <p>Toners MFP 432FDN em estoque : <strong>{2}</strong></p>
                 <p></p>
-                {2}
+                {3}
                 <p></p>
-                <p>Toners E52645 em estoque : <strong>{3}</strong></p>
+                <p>Toners E52645 em estoque : <strong>{4}</strong></p>
                 <p></p>
-                {4}
+                {5}
                 <p></p>
-                <p>Suporte TI - (11) 4152-9518 / 9821</p>
+                <p>
+                Toner M479 <strong>Preto</strong> em estoque : <strong>{6}</strong></br>
+                Toner M479 <strong>Ciano</strong> em estoque : <strong>{7}</strong></br>
+                Toner M479 <strong>Magenta</strong> em estoque : <strong>{8}</strong></br>
+                Toner M479 <strong>Amarelo</strong> em estoque : <strong>{9}</strong></br>
+                </p>
+                <p></p>
+                <p>Abra a planilha dos Relatórios Diarios <a href="\\\srvsao028\Automação Python\Relatorio_Diario.xlsx"
+                                                            target="_blank">Clicando aqui</a>
+                </p>
+                <p>Abra a planilha de Controle de Estoque Simpress <a href="\\\srvsao040\Departamentos\TI\Suporte\Estoque Simpress\Estoque (Simpress).xlsx""
+                                                                    target="_blank">Clicando aqui</a>
+                </p>
+            <p>Suporte TI - (11) 4152-9518 / 9821</p>
             </body>
         </html>
-        """.format(self.relatorio1.to_html(),self.Toner_MFP432.to_string(index=False),self.relatorio2.to_html(),self.Toner_MFPE52645.to_string(index=False),self.relatorio3.to_html())
+        """.format(self.GeradoEm,self.relatorio1.to_html(),self.Toner_MFP432.to_string(index=False),self.relatorio2.to_html(),self.Toner_MFPE52645.to_string(index=False),self.relatorio3.to_html(),self.M479_Black.to_string(index=False),self.M479_Cyan.to_string(index=False),self.M479_Pink.to_string(index=False),self.M479_Yellow.to_string(index=False))
         self.body = MIMEText(self.html, 'html')
         self.msg.attach(self.body)
         self.filename = "Relatorio_Diario.xlsx"
@@ -707,7 +795,11 @@ class Relatorio_Impressoras:
         self.Toner_MFP432 = self.tabela_simpress.loc[self.tabela_simpress["Modelo"] == "432FDN","Estoque"]
         self.Toner_MFPE52645 = self.tabela_simpress.loc[self.tabela_simpress["Modelo"] == "E52645","Estoque"]
         self.Toner_MFP7E77830 = self.tabela_simpress.loc[self.tabela_simpress["Modelo"] == "HP 7E77830","Estoque"]
-        self.Toner_MFP479 = self.tabela_simpress.loc[self.tabela_simpress["Modelo"] == "M479","Estoque"]
+        self.M479_Black = self.tabela_simpress.loc[self.tabela_simpress["Cor"] == "Black","Estoque"]
+        self.M479_Cyan = self.tabela_simpress.loc[self.tabela_simpress["Cor"] == "Cyan","Estoque"]
+        self.M479_Pink = self.tabela_simpress.loc[self.tabela_simpress["Cor"] == "Pink","Estoque"]
+        self.M479_Yellow = self.tabela_simpress.loc[self.tabela_simpress["Cor"] == "Yellow","Estoque"]
+
         print('Enviando E-mail...')
         time.sleep(3)
 
@@ -723,7 +815,7 @@ class Relatorio_Impressoras:
             { 'selector': 'caption', 'props': 'font-size: 18px; font-weight: bold; text-align: center' }]).set_properties(**{'border':'1px solid black',
              'padding-right': '20px'}).hide_index()
         self.fromaddr = "sistemas.plural@plural.com.br"
-        self.toaddr = "kelvin.rocha@plural.com.br"
+        self.toaddr = "suporte@plural.com.br"
         self.msg = MIMEMultipart() 
         self.msg['From'] = self.fromaddr 
         self.msg['To'] = self.toaddr 
@@ -733,22 +825,36 @@ class Relatorio_Impressoras:
             <head></head>
             <body>
                 <h3 style="margin-left:140px">SEGUNDO TURNO</h3>
+                <p>Relatório gerado em: <strong>{0}</strong></p>
                 <p>Segue Relatórios de todas as impressoras e estoque de suprimentos do 2º Turno:</p>
                 <p></p>
-                {0}
+                {1}
                 <p></p>
-                <p>Toners MFP 432FDN em estoque : <strong>{1}</strong></p>
+                <p>Toners MFP 432FDN em estoque : <strong>{2}</strong></p>
                 <p></p>
-                {2}
+                {3}
                 <p></p>
-                <p>Toners E52645 em estoque : <strong>{3}</strong></p>
+                <p>Toners E52645 em estoque : <strong>{4}</strong></p>
                 <p></p>
-                {4}
+                {5}
                 <p></p>
-                <p>Suporte TI - (11) 4152-9518 / 9821</p>
+                <p>
+                Toner M479 <strong>Preto</strong> em estoque : <strong>{6}</strong></br>
+                Toner M479 <strong>Ciano</strong> em estoque : <strong>{7}</strong></br>
+                Toner M479 <strong>Magenta</strong> em estoque : <strong>{8}</strong></br>
+                Toner M479 <strong>Amarelo</strong> em estoque : <strong>{9}</strong></br>
+                </p>
+                <p></p>
+                <p>Abra a planilha dos Relatórios Diarios <a href="\\\srvsao028\Automação Python\Relatorio_Diario.xlsx"
+                                                            target="_blank">Clicando aqui</a>
+                </p>
+                <p>Abra a planilha de Controle de Estoque Simpress <a href="\\\srvsao040\Departamentos\TI\Suporte\Estoque Simpress\Estoque (Simpress).xlsx""
+                                                                    target="_blank">Clicando aqui</a>
+                </p>
+            <p>Suporte TI - (11) 4152-9518 / 9821</p>
             </body>
         </html>
-        """.format(self.relatorio1.to_html(),self.Toner_MFP432.to_string(index=False),self.relatorio2.to_html(),self.Toner_MFPE52645.to_string(index=False),self.relatorio3.to_html())
+        """.format(self.GeradoEm,self.relatorio1.to_html(),self.Toner_MFP432.to_string(index=False),self.relatorio2.to_html(),self.Toner_MFPE52645.to_string(index=False),self.relatorio3.to_html(),self.M479_Black.to_string(index=False),self.M479_Cyan.to_string(index=False),self.M479_Pink.to_string(index=False),self.M479_Yellow.to_string(index=False))
         self.body = MIMEText(self.html, 'html')
         self.msg.attach(self.body)
         self.filename = "Relatorio_Diario.xlsx"
@@ -1022,7 +1128,11 @@ class Relatorio_Impressoras:
         self.Toner_MFP432 = self.tabela_simpress.loc[self.tabela_simpress["Modelo"] == "432FDN","Estoque"]
         self.Toner_MFPE52645 = self.tabela_simpress.loc[self.tabela_simpress["Modelo"] == "E52645","Estoque"]
         self.Toner_MFP7E77830 = self.tabela_simpress.loc[self.tabela_simpress["Modelo"] == "HP 7E77830","Estoque"]
-        self.Toner_MFP479 = self.tabela_simpress.loc[self.tabela_simpress["Modelo"] == "M479","Estoque"]
+        self.M479_Black = self.tabela_simpress.loc[self.tabela_simpress["Cor"] == "Black","Estoque"]
+        self.M479_Cyan = self.tabela_simpress.loc[self.tabela_simpress["Cor"] == "Cyan","Estoque"]
+        self.M479_Pink = self.tabela_simpress.loc[self.tabela_simpress["Cor"] == "Pink","Estoque"]
+        self.M479_Yellow = self.tabela_simpress.loc[self.tabela_simpress["Cor"] == "Yellow","Estoque"]
+
         print('Enviando E-mail...')
         time.sleep(3)
 
@@ -1037,10 +1147,8 @@ class Relatorio_Impressoras:
         self.relatorio3 = self.planilhaAberta.iloc[26:32,14:20].rename(columns={'TERCEIRO TURNO':'Local','Unnamed: 15':'Modelo','Unnamed: 16':'Preto','Unnamed: 17':'Ciano','Unnamed: 18':'Magenta','Unnamed: 19':'Amarelo'}).style.set_caption('Consumo de Toner HP LaserJet Pro MFP M479fdw').set_table_styles([
             { 'selector': 'caption', 'props': 'font-size: 18px; font-weight: bold; text-align: center' }]).set_properties(**{'border':'1px solid black',
              'padding-right': '20px'}).hide_index()
-
-
         self.fromaddr = "sistemas.plural@plural.com.br"
-        self.toaddr = "kelvin.rocha@plural.com.br"
+        self.toaddr = "suporte@plural.com.br"
         self.msg = MIMEMultipart() 
         self.msg['From'] = self.fromaddr 
         self.msg['To'] = self.toaddr 
@@ -1050,22 +1158,36 @@ class Relatorio_Impressoras:
             <head></head>
             <body>
                 <h3 style="margin-left:140px">TERCEIRO TURNO</h3>
+                <p>Relatório gerado em: <strong>{0}</strong></p>
                 <p>Segue Relatórios de todas as impressoras e estoque de suprimentos do 3º Turno:</p>
                 <p></p>
-                {0}
+                {1}
                 <p></p>
-                <p>Toners MFP 432FDN em estoque : <strong>{1}</strong></p>
+                <p>Toners MFP 432FDN em estoque : <strong>{2}</strong></p>
                 <p></p>
-                {2}
+                {3}
                 <p></p>
-                <p>Toners E52645 em estoque : <strong>{3}</strong></p>
+                <p>Toners E52645 em estoque : <strong>{4}</strong></p>
                 <p></p>
-                {4}
+                {5}
                 <p></p>
-                <p>Suporte TI - (11) 4152-9518 / 9821</p>
+                <p>
+                Toner M479 <strong>Preto</strong> em estoque : <strong>{6}</strong></br>
+                Toner M479 <strong>Ciano</strong> em estoque : <strong>{7}</strong></br>
+                Toner M479 <strong>Magenta</strong> em estoque : <strong>{8}</strong></br>
+                Toner M479 <strong>Amarelo</strong> em estoque : <strong>{9}</strong></br>
+                </p>
+                <p></p>
+                <p>Abra a planilha dos Relatórios Diarios <a href="\\\srvsao028\Automação Python\Relatorio_Diario.xlsx"
+                                                            target="_blank">Clicando aqui</a>
+                </p>
+                <p>Abra a planilha de Controle de Estoque Simpress <a href="\\\srvsao040\Departamentos\TI\Suporte\Estoque Simpress\Estoque (Simpress).xlsx""
+                                                                    target="_blank">Clicando aqui</a>
+                </p>
+            <p>Suporte TI - (11) 4152-9518 / 9821</p>
             </body>
         </html>
-        """.format(self.relatorio1.to_html(),self.Toner_MFP432.to_string(index=False),self.relatorio2.to_html(),self.Toner_MFPE52645.to_string(index=False),self.relatorio3.to_html())
+        """.format(self.GeradoEm,self.relatorio1.to_html(),self.Toner_MFP432.to_string(index=False),self.relatorio2.to_html(),self.Toner_MFPE52645.to_string(index=False),self.relatorio3.to_html(),self.M479_Black.to_string(index=False),self.M479_Cyan.to_string(index=False),self.M479_Pink.to_string(index=False),self.M479_Yellow.to_string(index=False))
         self.body = MIMEText(self.html, 'html')
         self.msg.attach(self.body)
         self.filename = "Relatorio_Diario.xlsx"
@@ -1180,6 +1302,7 @@ class Relatorio_Impressoras:
         self.book.save(r"\\srvsao028\Automação Python\Relatorio_Avulso.xlsx")        
         print("Planilha Salva com Sucesso")
     def MFP_E52645(self):
+        self.offline = 0
         print('Modelo MFP E52645...')
         self.cartucho_preto = []
         self.nome_impressoras = ['ALMOXARIFADO','QUALIDADE','ATENDIMENTO','FINANCEIRO','COMPRAS']
@@ -1251,7 +1374,9 @@ class Relatorio_Impressoras:
         self.book.save(r"\\srvsao028\Automação Python\Relatorio_Avulso.xlsx")        
         print("Planilha Salva com Sucesso")
     def MFP_M479fdw(self):
+        self.offline = 0
         print('Modelo MFP M479fdw...')
+        self.nome_impressoras = ['Dir. Carlos Jacomine','Anatilia','Atendimento Color','Rogerio Cordeiro','Welinton Martins','Adriana Gasparine']
         self.cartucho_preto = []
         self.cartucho_cyan = []
         self.cartucho_magenta = []
@@ -1302,10 +1427,11 @@ class Relatorio_Impressoras:
                 self.MFP479 = self.planilha.iloc[26:32,:6].rename(columns= {'Relatório Avulso':'Local','Unnamed: 1':'Modelo',
                                                                     'Unnamed: 2':'Preto','Unnamed: 3':'Ciano','Unnamed: 4':'Magenta','Unnamed: 5':'Amarelo'})
 
-                self.Preto = self.MFP479.loc[self.MFP479["Local"] == self.nome_impressoras[self.i],"Preto"]                                                                 
-                self.Ciano = self.MFP479.loc[self.MFP479["Local"] == self.nome_impressoras[self.i],"Ciano"]
-                self.Magenta = self.MFP479.loc[self.MFP479["Local"] == self.nome_impressoras[self.i],"Magenta"]                                                                 
-                self.Amarelo = self.MFP479.loc[self.MFP479["Local"] == self.nome_impressoras[self.i],"Amarelo"]
+                print(self.MFP479)
+                self.Preto = self.MFP479.loc[self.MFP479["Local"] == self.nome_impressoras[self.j],"Preto"]                                                                 
+                self.Ciano = self.MFP479.loc[self.MFP479["Local"] == self.nome_impressoras[self.j],"Ciano"]
+                self.Magenta = self.MFP479.loc[self.MFP479["Local"] == self.nome_impressoras[self.j],"Magenta"]                                                                 
+                self.Amarelo = self.MFP479.loc[self.MFP479["Local"] == self.nome_impressoras[self.j],"Amarelo"]
  
                 self.cartucho_preto.append(self.Preto.to_string(index=False))
                 self.cartucho_cyan.append(self.Ciano.to_string(index=False))
@@ -1342,12 +1468,12 @@ class Relatorio_Impressoras:
         pd.set_option('display.precision',0)
 
         self.Toner_MFP432 = self.tabela_simpress.loc[self.tabela_simpress["Modelo"] == "432FDN","Estoque"]
-
         self.Toner_MFPE52645 = self.tabela_simpress.loc[self.tabela_simpress["Modelo"] == "E52645","Estoque"]
-
         self.Toner_MFP7E77830 = self.tabela_simpress.loc[self.tabela_simpress["Modelo"] == "HP 7E77830","Estoque"]
-
-        self.Toner_MFP479 = self.tabela_simpress.loc[self.tabela_simpress["Modelo"] == "M479","Estoque"]
+        self.M479_Black = self.tabela_simpress.loc[self.tabela_simpress["Cor"] == "Black","Estoque"]
+        self.M479_Cyan = self.tabela_simpress.loc[self.tabela_simpress["Cor"] == "Cyan","Estoque"]
+        self.M479_Pink = self.tabela_simpress.loc[self.tabela_simpress["Cor"] == "Pink","Estoque"]
+        self.M479_Yellow = self.tabela_simpress.loc[self.tabela_simpress["Cor"] == "Yellow","Estoque"]
 
         print('Enviando E-mail...')
         time.sleep(3)
@@ -1361,7 +1487,7 @@ class Relatorio_Impressoras:
         self.relatorio2 = self.planilhaAberta.iloc[19:24,:4].rename(columns={'Relatório Avulso':'Local','Unnamed: 1':'Modelo','Unnamed: 2':'Toner Preto','Unnamed: 3':'Kit Aliment. Doc.'}).style.set_caption('Consumo de Toner HP LaserJet MFP E52645').set_table_styles([
             { 'selector': 'caption', 'props': 'font-size: 18px; font-weight: bold; text-align: center' }]).set_properties(**{'border':'1px solid black',
              'padding-right': '20px'}).hide_index()
-        self.relatorio3 = self.planilhaAberta.iloc[26:32,:6].rename(columns={'Relatório Avulso':'Local','Unnamed: 1':'Modelo','Unnamed: 2':'Preto','Unnamed: 3':'Ciano','Relatório Gerado:':'Magenta',self.DiaHoraAtual:'Amarelo'}).style.set_caption('Consumo de Toner HP LaserJet Pro MFP M479fdw').set_table_styles([
+        self.relatorio3 = self.planilhaAberta.iloc[26:32,:6].rename(columns={'Relatório Avulso':'Local','Unnamed: 1':'Modelo','Unnamed: 2':'Preto','Unnamed: 3':'Ciano','Unnamed: 4':'Magenta','Unnamed: 5':'Amarelo'}).style.set_caption('Consumo de Toner HP LaserJet Pro MFP M479fdw').set_table_styles([
             { 'selector': 'caption', 'props': 'font-size: 18px; font-weight: bold; text-align: center' }]).set_properties(**{'border':'1px solid black',
              'padding-right': '20px'}).hide_index()
 
@@ -1377,24 +1503,37 @@ class Relatorio_Impressoras:
         <html>
             <head></head>
             <body>
+                <h3 style="margin-left:140px">Relatório Avulso</h3>
+                <p>Relatório gerado em: <strong>{0}</strong></p>
                 <p>Segue Relatórios de todas as impressoras e estoque de suprimentos:</p>
                 <p></p>
-                {0}
+                {1}
                 <p></p>
-                <p>Toners MFP 432FDN em estoque : <strong>{1}</strong></p>
+                <p>Toners MFP 432FDN em estoque : <strong>{2}</strong></p>
                 <p></p>
-                {2}
+                {3}
                 <p></p>
-                <p>Toners E52645 em estoque : <strong>{3}</strong></p>
+                <p>Toners E52645 em estoque : <strong>{4}</strong></p>
                 <p></p>
-                {4}
+                {5}
                 <p></p>
-                <p>Suporte TI - (11) 4152-9518 / 9821</p>
-                <a href="\\\srvsao028\Automação Python\Relatorio_Avulso.xlsx"
-                target="_blank">Abra a Planilha da rede aqui!</a>
+                <p>
+                Toner M479 <strong>Preto</strong> em estoque : <strong>{6}</strong></br>
+                Toner M479 <strong>Ciano</strong> em estoque : <strong>{7}</strong></br>
+                Toner M479 <strong>Magenta</strong> em estoque : <strong>{8}</strong></br>
+                Toner M479 <strong>Amarelo</strong> em estoque : <strong>{9}</strong></br>
+                </p>
+                <p></p>
+                <p>Abra a planilha do Relatório Avulso  <a href="\\\srvsao028\Automação Python\Relatorio_Avulso.xlsx"
+                                                            target="_blank">Clicando aqui</a>
+                </p>
+                <p>Abra a planilha de Controle de Estoque Simpress <a href="\\\srvsao040\Departamentos\TI\Suporte\Estoque Simpress\Estoque (Simpress).xlsx""
+                                                                    target="_blank">Clicando aqui</a>
+                </p>
+            <p>Suporte TI - (11) 4152-9518 / 9821</p>
             </body>
         </html>
-        """.format(self.relatorio1.to_html(),self.Toner_MFP432.to_string(index=False),self.relatorio2.to_html(),self.Toner_MFPE52645.to_string(index=False),self.relatorio3.to_html())
+        """.format(self.GeradoEm,self.relatorio1.to_html(),self.Toner_MFP432.to_string(index=False),self.relatorio2.to_html(),self.Toner_MFPE52645.to_string(index=False),self.relatorio3.to_html(),self.M479_Black.to_string(index=False),self.M479_Cyan.to_string(index=False),self.M479_Pink.to_string(index=False),self.M479_Yellow.to_string(index=False))
         self.body = MIMEText(self.html, 'html')
         self.msg.attach(self.body)
         self.filename = "Relatorio_Avulso.xlsx"

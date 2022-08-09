@@ -28,7 +28,7 @@ class Relatorio_Impressoras:
         self.Hora = '{}'.format(self.DataAtual.hour)
         self.GeradoEm = self.Agora.strftime("%d/%m/%Y %H:%M")
         
-        if int(self.Hora) >= 15 and int(self.Hora) <= 17:
+        if int(self.Hora) >= 5 and int(self.Hora) <= 7:
 
             self.planilha = openpyxl.load_workbook(r"\\SRVSAO028\Automação Python\Relatorio_Diario.xlsx")
             self.modelo = self.planilha['Modelo']
@@ -66,7 +66,7 @@ class Relatorio_Impressoras:
                 self.Enviar_Email_PrimeiroTurno()
         
 
-        elif int(self.Hora) >= 20 and int(self.Hora) <= 22:
+        elif int(self.Hora) >= 13 and int(self.Hora) <= 15:
             self.planilha = openpyxl.load_workbook(r"\\SRVSAO028\Automação Python\Relatorio_Diario.xlsx")
             self.modelo = self.planilha['Modelo']
             self.Hoje = dt.datetime.now()
@@ -1302,6 +1302,7 @@ class Relatorio_Impressoras:
         self.book.save(r"\\srvsao028\Automação Python\Relatorio_Avulso.xlsx")        
         print("Planilha Salva com Sucesso")
     def MFP_E52645(self):
+        self.offline = 0
         print('Modelo MFP E52645...')
         self.cartucho_preto = []
         self.nome_impressoras = ['ALMOXARIFADO','QUALIDADE','ATENDIMENTO','FINANCEIRO','COMPRAS']
@@ -1349,8 +1350,8 @@ class Relatorio_Impressoras:
                 self.E52645 = self.planilha.iloc[19:24,:4].rename(columns= {'Relatório Avulso':'Local','Unnamed: 1':'Modelo',
                                                                     'Unnamed: 2':'Toner Preto','Unnamed: 3':'Kit Aliment. Doc.'})
 
-                self.Toner = self.E52645.loc[self.E52645["Local"] == self.nome_impressoras[self.i],"Toner Preto"]   
-                self.Kit = self.E52645.loc[self.E52645["Local"] == self.nome_impressoras[self.i],"Kit Aliment. Doc."]
+                self.Toner = self.E52645.loc[self.E52645["Local"] == self.nome_impressoras[self.l],"Toner Preto"]   
+                self.Kit = self.E52645.loc[self.E52645["Local"] == self.nome_impressoras[self.l],"Kit Aliment. Doc."]
 
                 self.cartucho_preto.append(self.Toner.to_string(index=False))
                 self.kit_aliment_documentos.append(self.Kit.to_string(index=False))
@@ -1373,7 +1374,9 @@ class Relatorio_Impressoras:
         self.book.save(r"\\srvsao028\Automação Python\Relatorio_Avulso.xlsx")        
         print("Planilha Salva com Sucesso")
     def MFP_M479fdw(self):
+        self.offline = 0
         print('Modelo MFP M479fdw...')
+        self.nome_impressoras = ['Dir. Carlos Jacomine','Anatilia','Atendimento Color','Rogerio Cordeiro','Welinton Martins','Adriana Gasparine']
         self.cartucho_preto = []
         self.cartucho_cyan = []
         self.cartucho_magenta = []
@@ -1424,10 +1427,11 @@ class Relatorio_Impressoras:
                 self.MFP479 = self.planilha.iloc[26:32,:6].rename(columns= {'Relatório Avulso':'Local','Unnamed: 1':'Modelo',
                                                                     'Unnamed: 2':'Preto','Unnamed: 3':'Ciano','Unnamed: 4':'Magenta','Unnamed: 5':'Amarelo'})
 
-                self.Preto = self.MFP479.loc[self.MFP479["Local"] == self.nome_impressoras[self.i],"Preto"]                                                                 
-                self.Ciano = self.MFP479.loc[self.MFP479["Local"] == self.nome_impressoras[self.i],"Ciano"]
-                self.Magenta = self.MFP479.loc[self.MFP479["Local"] == self.nome_impressoras[self.i],"Magenta"]                                                                 
-                self.Amarelo = self.MFP479.loc[self.MFP479["Local"] == self.nome_impressoras[self.i],"Amarelo"]
+                print(self.MFP479)
+                self.Preto = self.MFP479.loc[self.MFP479["Local"] == self.nome_impressoras[self.j],"Preto"]                                                                 
+                self.Ciano = self.MFP479.loc[self.MFP479["Local"] == self.nome_impressoras[self.j],"Ciano"]
+                self.Magenta = self.MFP479.loc[self.MFP479["Local"] == self.nome_impressoras[self.j],"Magenta"]                                                                 
+                self.Amarelo = self.MFP479.loc[self.MFP479["Local"] == self.nome_impressoras[self.j],"Amarelo"]
  
                 self.cartucho_preto.append(self.Preto.to_string(index=False))
                 self.cartucho_cyan.append(self.Ciano.to_string(index=False))
@@ -1483,13 +1487,13 @@ class Relatorio_Impressoras:
         self.relatorio2 = self.planilhaAberta.iloc[19:24,:4].rename(columns={'Relatório Avulso':'Local','Unnamed: 1':'Modelo','Unnamed: 2':'Toner Preto','Unnamed: 3':'Kit Aliment. Doc.'}).style.set_caption('Consumo de Toner HP LaserJet MFP E52645').set_table_styles([
             { 'selector': 'caption', 'props': 'font-size: 18px; font-weight: bold; text-align: center' }]).set_properties(**{'border':'1px solid black',
              'padding-right': '20px'}).hide_index()
-        self.relatorio3 = self.planilhaAberta.iloc[26:32,:6].rename(columns={'Relatório Avulso':'Local','Unnamed: 1':'Modelo','Unnamed: 2':'Preto','Unnamed: 3':'Ciano','Relatório Gerado:':'Magenta',self.DiaHoraAtual:'Amarelo'}).style.set_caption('Consumo de Toner HP LaserJet Pro MFP M479fdw').set_table_styles([
+        self.relatorio3 = self.planilhaAberta.iloc[26:32,:6].rename(columns={'Relatório Avulso':'Local','Unnamed: 1':'Modelo','Unnamed: 2':'Preto','Unnamed: 3':'Ciano','Unnamed: 4':'Magenta','Unnamed: 5':'Amarelo'}).style.set_caption('Consumo de Toner HP LaserJet Pro MFP M479fdw').set_table_styles([
             { 'selector': 'caption', 'props': 'font-size: 18px; font-weight: bold; text-align: center' }]).set_properties(**{'border':'1px solid black',
              'padding-right': '20px'}).hide_index()
 
 
         self.fromaddr = "sistemas.plural@plural.com.br"
-        self.toaddr = "suporte@plural.com.br"
+        self.toaddr = "kelvin.rocha@plural.com.br"
 
         self.msg = MIMEMultipart() 
         self.msg['From'] = self.fromaddr 
@@ -1499,6 +1503,7 @@ class Relatorio_Impressoras:
         <html>
             <head></head>
             <body>
+                <h3 style="margin-left:140px">Relatório Avulso</h3>
                 <p>Relatório gerado em: <strong>{0}</strong></p>
                 <p>Segue Relatórios de todas as impressoras e estoque de suprimentos:</p>
                 <p></p>
